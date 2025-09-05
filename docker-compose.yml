@@ -17,7 +17,41 @@ services:
       start_period: 10s
     env_file:
       - .env
-  django-web:
+  cache:
+    image: redis:8.2.1
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - cache:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+  celery-worker:
+    build:
+      context: ./django_backend
+      dockerfile: Dockerfile
+    command: celery --app django_backend worker -l info
+    depends_on:
+      - django
+      - cache
+    env_file:
+      - .env
+  celery-beat:
+    build:
+      context: ./django_backend
+      dockerfile: Dockerfile
+    command: celery --app django_backend beat -l info
+    depends_on:
+      - django
+      - cache
+    env_file:
+      - .env
+  django:
     build:
      context: ./django_backend
      dockerfile: Dockerfile
@@ -26,6 +60,7 @@ services:
       - "8000:8000"
     depends_on:
       - db
+      - cache
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
       interval: 30s
@@ -43,7 +78,11 @@ services:
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
       DATABASE_HOST: ${DATABASE_HOST}
       DATABASE_PORT: ${DATABASE_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
     env_file:
       - .env
 volumes:
    postgres_data:
+   cache:
