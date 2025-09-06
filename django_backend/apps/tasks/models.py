@@ -14,7 +14,7 @@ class Task(models.Model):
 	# tags = models.ManyToManyField(Tag)
 	# parent_task = models.ForeignKey("self", null=True, on_delete=models.SET_NULL)
 
-	# metadata = models.JSONField(default=dict)
-	# created_at = models.DateTimeField(auto_now_add=True)
-	# updated_at = models.DateTimeField(auto_now=True)
-	# is_archived = models.BooleanField(default=False)
+	metadata = models.JSONField(default=dict)
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+	is_archived = models.BooleanField(default=False)
