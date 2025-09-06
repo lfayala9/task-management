@@ -59,6 +59,14 @@ services:
     container_name: django-docker
     ports:
       - "8000:8000"
+    command: >
+      sh -c "
+        echo 'Waiting for PostgreSQL...' &&
+        while ! nc -z db 5432; do sleep 1; done &&
+        echo 'PostgreSQL is up!' &&
+        python manage.py migrate &&
+        python manage.py runserver 0.0.0.0:8000
+      "
     depends_on:
       - db
       - cache
@@ -69,6 +77,7 @@ services:
       retries: 5
       start_period: 10s
     environment:
+      PYTHONUNBUFFERED: 1
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
       DEBUG: ${DEBUG}
       DJANGO_LOGLEVEL: ${DJANGO_LOGLEVEL}

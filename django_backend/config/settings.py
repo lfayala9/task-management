@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
+load_dotenv(os.path.join(Path(__file__).resolve().parent.parent.parent, ".env"))
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "supersecretkey") #cuidar secret key
 DEBUG = os.environ.get("DEBUG", "1") == "1"
@@ -12,7 +14,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "apps",
+    "apps.tasks",
 ] #apps necesarias
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -42,14 +44,34 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOGLEVEL', 'INFO'),
+            'propagate': False,
+        },
+    },
+}
 DATABASES = {
     "default": {
-        "ENGINE": os.environ.get("DATABASE_ENGINE", "django.db.backends.sqlite3"),
+        "ENGINE": os.environ.get("DATABASE_ENGINE"),
         "NAME": os.environ.get("DATABASE_NAME", BASE_DIR / "db.sqlite3"),
-        "USER": os.environ.get("DATABASE_USERNAME", ""),
-        "PASSWORD": os.environ.get("DATABASE_PASSWORD", ""),
-        "HOST": os.environ.get("DATABASE_HOST", ""),
-        "PORT": os.environ.get("DATABASE_PORT", ""),
+        "USER": os.environ.get("DATABASE_USERNAME", "postgres"),
+        "PASSWORD": os.environ.get("DATABASE_PASSWORD", "1605"),
+        "HOST": os.environ.get("DATABASE_HOST", "localhost"),
+        "PORT": os.environ.get("DATABASE_PORT", "5432"),
     }
 }
 AUTH_PASSWORD_VALIDATORS = []
