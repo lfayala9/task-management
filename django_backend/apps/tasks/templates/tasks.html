@@ -13,5 +13,19 @@
 		<textarea name="description" placeholder="Task Description" required></textarea>
 		<button type="submit">Add Task</button>
 	</form>
+	{% for task in tasks %}
+		<div>
+			<h2>{{ task.title }}</h2>
+			<form method="POST" action="/tasks/{{ task.id }}/delete/">
+				{% csrf_token %}
+				<button type="submit">Delete Task</button>
+			</form>
+			<form method="GET" action="/tasks/{{ task.id }}">
+				<button type="submit">Get Task info</button>
+			</form>
+		</div>
+	{% empty %}
+		<p>No tasks available.</p>
+	{% endfor %}
 </body>
 </html>
