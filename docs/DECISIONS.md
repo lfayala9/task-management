@@ -19,3 +19,10 @@
 	ENG: Maybe I'll choose doing the security features because I know how to work with JWT and key management
 
 	ESP: Quizá haga las security features porque ya he trabajado con JWT y key management
+
+## (Day 3)
+## Change the views
+	
+	ENG: It doesn't made any sense what I was doing in the views when calling every single endpoint in a different function instead of doing one layer CRUD and having the templates getting that logic, luckly I watched a youtube video of how to do this efficiently
+
+	ESP: No tenía sentido alguno que estaba llamando cada endpoint en una funcion disnta en vez de tener solo una capa de CRUD que los templates se apoyen en esa logica, menos mal vi un video en youtube de como hacer esto de forma eficiente
