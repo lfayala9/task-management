@@ -26,3 +26,9 @@
 	ENG: It doesn't made any sense what I was doing in the views when calling every single endpoint in a different function instead of doing one layer CRUD and having the templates getting that logic, luckly I watched a youtube video of how to do this efficiently
 
 	ESP: No tenía sentido alguno que estaba llamando cada endpoint en una funcion disnta en vez de tener solo una capa de CRUD que los templates se apoyen en esa logica, menos mal vi un video en youtube de como hacer esto de forma eficiente
+
+## Init data
+
+	ENG: To have some data to work as example I created a init_data.py file that creates default data in the database, we'll keep that to showcase the app features
+
+	ESP: Para tener data de ejemplo con la que trabajar se creó un archivo init_data.py que mete default data en la base de datos, se mantendrá para demostrar las funcionalidades de la app sin tener que crear todo a mano
