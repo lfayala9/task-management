@@ -60,6 +60,10 @@
 			<input type="text" name="tags" value="{% for tag in task.tags.all %}{{ tag.name }}{% if not forloop.last %},{% endif %}{% endfor %}">
 		    <button type="submit">Update Task</button>
 		  </form>
+		  <a href="/tasks/{{ task.id }}/comments/create/">
+			<button>Leave a Comment</button>
+		  </a>
+		  <button>Check Comments</button>
 		</details>
 	</div>
 </body>
