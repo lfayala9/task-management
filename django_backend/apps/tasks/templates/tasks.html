@@ -11,7 +11,49 @@
 		{% csrf_token %}
 		<input type="text" name="title" placeholder="Task Title" required>
 		<textarea name="description" placeholder="Task Description" required></textarea>
+		<select name="status">
+			<option value="todo">To Do</option>
+			<option value="in_progress">In Progress</option>
+			<option value="done">Done</option>
+		</select>
+		<select name="priority">
+			<option value="low">Low</option>
+			<option value="medium">Medium</option>
+			<option value="high">High</option>
+		</select>
+		<input type="date" name="due_date">
+		<input type="number" step="0.01" name="estimated_hours" placeholder="Estimated Hours">
+		<input type="number" step="0.01" name="actual_hours" placeholder="Actual Hours">
+		<input type="text" name="created_by" placeholder="Created By User ID" value="1" required>
+		<input type="text" name="assigned_to" placeholder="Assigned To User IDs (comma separated)" required>
+		<input type="text" name="parent_task" placeholder="Parent Task ID">
+		<label for="tags">Tags:
+			<select name="tags" multiple>
+				<option value="bug">Bug</option>
+				<option value="feature">Feature</option>
+				<option value="improvement">Improvement</option>
+				<option value="documentation">Documentation</option>
+				<option value="backend">Backend</option>
+				<option value="frontend">Frontend</option>
+			</select>
+		</label>
 		<button type="submit">Add Task</button>
 	</form>
+	{% for task in tasks %}
+		<div>
+			<h2>{{ task.title }}</h2>
+			<form method="POST" action="/tasks/{{ task.id }}/delete/">
+				{% csrf_token %}
+				<button type="submit">Delete Task</button>
+			</form>
+			<form method="GET" action="/tasks/{{ task.id }}">
+				<button type="submit">Get Task info</button>
+			</form>
+		</div>
+	{% empty %}
+		<p>No tasks available.</p>
+	{% endfor %}
+	<button>Logout</button>
+	<button onclick="location.href='/tags/create/'">Create Tag</button>
 </body>
 </html>
