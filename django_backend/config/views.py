@@ -1,9 +1,12 @@
-from apps.tasks.models import Task, Tag
+from apps.tasks.models import Task, Tag, TaskAssignment, TaskHistory, Comment
 from apps.users.models import User
+from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.forms.models import model_to_dict
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login as auth_login
 import logging
 import json
 
@@ -11,6 +14,17 @@ logger = logging.getLogger(__name__)
 
 def index(request):
 	return render(request, "index.html")
+
+@login_required
+def create_comment(request, task_id):
+	task = get_object_or_404(Task, pk=task_id)
+	if request.method == "POST":
+		content = request.POST.get("content")
+		if content.strip():
+			author = request.user
+			Comment.objects.create(task=task, author=author, content=content)
+		return redirect(f"/tasks/{task.id}/")
+	return render(request, "create_comment.html", {"task": task})
 
 def register(request):
 	if request.method == "POST":
@@ -26,13 +40,13 @@ def register(request):
 		return redirect("/")
 	return render(request, "register.html")
 
-def login(request):
+def login_user(request):
 	if request.method == "POST":
 		username = request.POST.get("username")
 		password = request.POST.get("password")
-		user = User.objects.filter(username=username).first()
-		if user and user.check_password(password):
-			request.session['user_id'] = user.id
+		user = authenticate(request, username=username, password=password)
+		if user:
+			auth_login(request, user)
 			return redirect("/tasks/")
 		else:
 			return render(request, "login.html", {"error": "Invalid username or password."})
@@ -113,16 +127,33 @@ def find_task(request, task_id):
 		return redirect(f"/tasks/{task.id}/")
 	return render(request, "task_detail.html", {"task": task, "task_tag_names": task_tag_names})
 
+def authenticate_request(request):
+	auth_header = request.headers.get("Authorization")
+	if not auth_header or not auth_header.startswith("Bearer "):
+		return None
+	try:
+		user_id = int(auth_header.split(" ")[1])
+		return User.objects.get(id=user_id)
+	except Exception:
+		return None
+
 @csrf_exempt
 def task_list_api(request):
+	user = authenticate_request(request)
+	if not user:
+		return JsonResponse({"error": "Unauthorized"}, status=401)
 	if request.method == "GET":
 		tasks = Task.objects.all()
 		task_list = [do_task(task) for task in tasks]
 		return JsonResponse(task_list, safe=False)
 	return JsonResponse({"error": "Method not allowed"}, status=405)
 
+
 @csrf_exempt
 def  task_api(request, task_id):
+	user = authenticate_request(request)
+	if not user:
+		return JsonResponse({"error": "Unauthorized"}, status=401)
 	task = get_task(task_id, JsonResponse({"error": "Task not found"}, status=404))
 	if not task:
 		return JsonResponse({"error": "Task not found"}, status=404)
@@ -162,3 +193,82 @@ def create_tag(request):
         Tag.objects.create(name=name)
         return redirect('tasks')
     return render(request, 'create_tag.html')
+
+@csrf_exempt
+def auth_api(request, action):
+	if action not in ["login", "register", "logout", "refresh"]:
+		return JsonResponse({"error": "Invalid action"}, status=400)
+	if request.method != "POST":
+		return JsonResponse({"error": "Method not allowed"}, status=405)
+	try:
+		data = json.loads(request.body)
+	except json.JSONDecodeError:
+		return JsonResponse({"error": "Invalid JSON"}, status=400)
+	if action == "register":
+		username = data.get("username")
+		password = data.get("password")
+		email = data.get("email", "")
+		if not username or not password:
+			return JsonResponse({"error": "Username and password are required."}, status=400)
+		if User.objects.filter(username=username).exists():
+			return JsonResponse({"error": "Username already exists."}, status=400)
+		user = User.objects.create_user(username=username, password=password, email=email)
+		user.save()
+		return JsonResponse({"status": "registered"})
+	elif action == "login":
+		username = data.get("username")
+		password = data.get("password")
+		user = authenticate(request, username=username, password=password)
+		if user:
+			return JsonResponse({"status": "logged in", "user_id": user.id})
+		else:
+			return JsonResponse({"error": "Invalid username or password."}, status=400)
+	elif action == "logout":
+		return JsonResponse({"status": "logged out"})
+	elif action == "refresh":
+		return JsonResponse({"status": "token refreshed"})
+	return JsonResponse({"error": "Method not allowed"}, status=405)
+
+def user_api(request, user_id=None):
+	if request.method == "GET":
+		if user_id == "me":
+			user = request.user
+			return JsonResponse({"id": user.id, "username": user.username, "email": user.email})
+		elif user_id:
+			try:
+				user = User.objects.get(id=user_id)
+				return JsonResponse({"id": user.id, "username": user.username, "email": user.email})
+			except User.DoesNotExist:
+				return JsonResponse({"error": "User not found"}, status=404)
+		else:
+			page = int(request.GET.get("page", 1))
+			per_page = int(request.GET.get("per_page", 10))
+			users = User.objects.all().order_by("id")
+			paginator = Paginator(users, per_page)
+			page_obj = paginator.get_page(page)
+			data = [{"id": user.id, "username": user.username, "email": user.email} for user in page_obj]
+			return JsonResponse({"users": data, "total": paginator.count, "num_pages": paginator.num_pages})
+	elif request.metho == "PUT":
+		if not user_id or user_id == "me":
+			user = request.user
+		else:
+			try:
+				user = User.objects.get(id=user_id)
+			except User.DoesNotExist:
+				return JsonResponse({"error": "User not found"}, status=404)
+		try:
+			data = json.loads(request.body)
+			if "username" in data:
+				user.username = data["username"]
+			if "email" in data:
+				user.email = data["email"]
+			if "password" in data:
+				user.set_password(data["password"])
+			user.save()
+			return JsonResponse({"status": "updated"})
+		except json.JSONDecodeError:
+			return JsonResponse({"error": "Invalid JSON"}, status=400)
+		except Exception as e:
+			logger.error(f"Error updating user: {e}")
+			return JsonResponse({"error": "Internal server error"}, status=500)
+	return JsonResponse({"error": "Method not allowed"}, status=405)
