@@ -6,7 +6,6 @@
 
 	ENG: Decided to implement the extra feature of JWT authentication with refresh tokens because I already know a thing or two of JWT and theres a lot of documentation. JWT in that sense is really practical and scalable, thus separing the different contexts as web users with cookies and CSRF and API users with bearable tokens is a mixed integration that works really well in this context
 
-
 ## FEATURES SKIPPED
 
 	ENG: I skipped every extra feature besides the JWT one because I was running out of time and I spend a lot of time doing the mandatory part. Poor time administration I guess
