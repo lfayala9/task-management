@@ -1,6 +1,7 @@
 from apps.tasks.models import Task, Tag, TaskAssignment, TaskHistory, Comment
 from apps.users.models import User
 from apps.tasks.celery_tasks import send_task_notification
+from scripts.utils import get_token, authenticate_request
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.forms.models import model_to_dict
@@ -8,23 +9,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login as auth_login
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.exceptions import AuthenticationFailed
 import logging
 import json
 
 logger = logging.getLogger(__name__)
-
-def test_notification(request):
-    try:
-        result = send_task_notification.delay(1, "task_created")
-        return JsonResponse({
-            "status": "Task enqueued", 
-            "task_id": result.id
-        })
-    except Exception as e:
-        return JsonResponse({
-            "status": "Error", 
-            "error": str(e)
-        }, status=500)
 
 def index(request):
 	return render(request, "index.html")
@@ -141,16 +131,6 @@ def find_task(request, task_id):
 		return redirect(f"/tasks/{task.id}/")
 	return render(request, "task_detail.html", {"task": task, "task_tag_names": task_tag_names})
 
-def authenticate_request(request):
-	auth_header = request.headers.get("Authorization")
-	if not auth_header or not auth_header.startswith("Bearer "):
-		return None
-	try:
-		user_id = int(auth_header.split(" ")[1])
-		return User.objects.get(id=user_id)
-	except Exception:
-		return None
-
 @csrf_exempt
 def task_list_api(request):
 	user = authenticate_request(request)
@@ -228,19 +208,27 @@ def auth_api(request, action):
 			return JsonResponse({"error": "Username already exists."}, status=400)
 		user = User.objects.create_user(username=username, password=password, email=email)
 		user.save()
-		return JsonResponse({"status": "registered"})
+		token = get_token(user)
+		return JsonResponse({"status": "registered", "token": token})
 	elif action == "login":
 		username = data.get("username")
 		password = data.get("password")
 		user = authenticate(request, username=username, password=password)
 		if user:
-			return JsonResponse({"status": "logged in", "user_id": user.id})
+			token = get_token(user)
+			return JsonResponse({"status": "logged in", "user_id": user.id, "token": token})
 		else:
 			return JsonResponse({"error": "Invalid username or password."}, status=400)
 	elif action == "logout":
 		return JsonResponse({"status": "logged out"})
 	elif action == "refresh":
-		return JsonResponse({"status": "token refreshed"})
+		refresh_token = data.get("refresh")
+		from rest_framework_simplejwt.tokens import RefreshToken
+		try:
+			refresh = RefreshToken(refresh_token)
+			return JsonResponse({"status": "token refreshed", "access": str(refresh.access_token)})
+		except Exception:
+			return JsonResponse({"error": "Invalid refresh token"}, status=400)
 	return JsonResponse({"error": "Method not allowed"}, status=405)
 
 @csrf_exempt

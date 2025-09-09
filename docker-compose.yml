@@ -102,6 +102,40 @@ services:
       - cache
     env_file:
       - .env
+  tests:
+    build:
+      context: ./django_backend
+      dockerfile: Dockerfile
+    container_name: django-tests
+    working_dir: /app
+    command: >
+      sh -c "
+        echo 'Waiting for PostgreSQL...' &&
+        while ! nc -z db 5432; do sleep 1; done &&
+        echo 'PostgreSQL is up!' &&
+        pytest apps/tests/tests.py --disable-warnings -v &&
+        echo 'Server running in localhost:8000!!!!'
+      "
+    depends_on:
+      - db
+      - cache
+    env_file:
+      - .env
+    environment:
+      PYTHONUNBUFFERED: 1
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DEBUG: "0"
+      DJANGO_LOGLEVEL: "INFO"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1"
+      DATABASE_ENGINE: ${DATABASE_ENGINE}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
 volumes:
    postgres_data:
    cache:
