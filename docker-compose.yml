@@ -41,7 +41,7 @@ services:
     container_name: django-docker
     ports:
       - "8000:8000"
-    command: ["scripts/entrypoint.sh"]
+    command: ["bash", "/app/scripts/entrypoint.sh"]
     depends_on:
       - db
       - cache
