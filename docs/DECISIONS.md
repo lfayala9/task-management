@@ -1,34 +1,30 @@
 # DECISIONS
 
-## (DAY 2)
-## Updating this file so late
+## FEATURES MADE
 
-	ENG: Since the firsts steps as creating the docker compose file and integrating the database were more reading
-	the documentation of django and docker and it didn't require any REAL logic decision behind it I did not updated this file until the second day of coding
+## JWT
 
-	ESP: Ya que los primeros pasos fueron crear el docker compose file y integrar de forma basica la db fue mas que todo leer documentación y no requirió ninguna decisión logica real no actualicé este archivo sino hasta la segunda semana de programar
+	ENG: Decided to implement the extra feature of JWT authentication with refresh tokens because I already know a thing or two of JWT and theres a lot of documentation. JWT in that sense is really practical and scalable, thus separing the different contexts as web users with cookies and CSRF and API users with bearable tokens is a mixed integration that works really well in this context
 
-## Not having healthchecks for celery (yet)
 
-	ENG: Being honest because at this stage (second day) I don't really know how celery works really so first I need to fully understeand how it works before having checks that I dont know how they work (also because I didnt find articles or discussions on stackoverflow/reddit that talk about them)
+## FEATURES SKIPPED
 
-	ESP: Siendo honesto porque en esta etapa de desarrollo no se muy bien aun como funciona celery worker/beat asi que primero necesito entender como funcionan bien esos servicios antes de poner checks que no entiendo como funcionan (tambien porque aun no he encontrado articulos ni discusiones en stackoverflow/reddit que hablen al respecto)
+	ENG: I skipped every extra feature besides the JWT one because I was running out of time and I spend a lot of time doing the mandatory part. Poor time administration I guess
 
-## Advance features (yet to decide)
 
-	ENG: Maybe I'll choose doing the security features because I know how to work with JWT and key management
+## Time allocation breakdown
 
-	ESP: Quizá haga las security features porque ya he trabajado con JWT y key management
+	ENG:
+	First day: Learning about dockerfiles and compose and assembling the docker-compose file with everything we needed, also, despite knowing a thing or two about django I used a lot of time reading the docs, watching tutorials and researching about it.
 
-## (Day 3)
-## Change the views
-	
-	ENG: It doesn't made any sense what I was doing in the views when calling every single endpoint in a different function instead of doing one layer CRUD and having the templates getting that logic, luckly I watched a youtube video of how to do this efficiently
+	Second day: I kinda started building the house by the roof and first I did the views and used the django templates to generate a html, also created a basic task model to ensure that the html could render every request I needed
 
-	ESP: No tenía sentido alguno que estaba llamando cada endpoint en una funcion disnta en vez de tener solo una capa de CRUD que los templates se apoyen en esa logica, menos mal vi un video en youtube de como hacer esto de forma eficiente
+	Third day: I built almos all models and tested them with creating the task and assign it to a ceratin user also, since I started from the finishing point, that night I started to create the REST architecture and testing some API REST endpoints
 
-## Init data
+	Fourth Day: Pure REST tests with all endpoints and researching reading and doing my best with Celery
 
-	ENG: To have some data to work as example I created a init_data.py file that creates default data in the database, we'll keep that to showcase the app features
+## Styles
 
-	ESP: Para tener data de ejemplo con la que trabajar se creó un archivo init_data.py que mete default data en la base de datos, se mantendrá para demostrar las funcionalidades de la app sin tener que crear todo a mano
+	ENG: I have every single html with a style tag, despite it being ugly I leave it that way beacuse its specified that the frontend part its not that relevant, and django dropped a MIME Type error that I couldnt know how to fix
+
+

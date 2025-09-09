@@ -108,7 +108,7 @@ if REDIS_PASSWORD:
 else:
     CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/0"
     CELERY_RESULT_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/0"
-
+EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 CELERY_BEAT_SCHEDULE = {
     'daily-summary': {
         'task': 'apps.tasks.celery_tasks.generate_daily_summary',
