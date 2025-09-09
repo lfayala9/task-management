@@ -1,5 +1,6 @@
 from apps.tasks.models import Task, Tag, TaskAssignment, TaskHistory, Comment
 from apps.users.models import User
+from apps.tasks.celery_tasks import send_task_notification
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.forms.models import model_to_dict
@@ -11,6 +12,36 @@ import logging
 import json
 
 logger = logging.getLogger(__name__)
+
+def test_notification(request):
+    try:
+        # Verificar conexión a Redis primero
+        from django.conf import settings
+        import redis
+        
+        print(f"DEBUG: Attempting to connect to Redis...")
+        r = redis.Redis.from_url(settings.CELERY_BROKER_URL)
+        ping_result = r.ping()
+        print(f"DEBUG: Redis ping successful: {ping_result}")
+        
+        # Intentar enviar la tarea
+        print(f"DEBUG: Attempting to send task...")
+        result = send_task_notification.delay(1, "task_created")
+        print(f"DEBUG: Task sent successfully with ID: {result.id}")
+        
+        return JsonResponse({
+            "status": "Task enqueued", 
+            "task_id": result.id
+        })
+    except Exception as e:
+        print(f"DEBUG: Error occurred: {str(e)}")
+        print(f"DEBUG: Error type: {type(e)}")
+        import traceback
+        print(f"DEBUG: Full traceback: {traceback.format_exc()}")
+        return JsonResponse({
+            "status": "Error", 
+            "error": str(e)
+        }, status=500)
 
 def index(request):
 	return render(request, "index.html")
@@ -86,7 +117,6 @@ def tasks_view(request):
 			"status": request.POST["status"],
 			"priority": request.POST["priority"],
 			"due_date": request.POST["due_date"],
-			# "tags": request.POST.getlist("tags"),
 			"estimated_hours": request.POST["estimated_hours"],
 			"actual_hours": request.POST["actual_hours"],
 			"created_by": created_by,
@@ -101,6 +131,7 @@ def tasks_view(request):
 		if tags:
 			tag_objs = Tag.objects.filter(name__in=tags)
 			task.tags.set(tag_objs)
+		send_task_notification.delay(task.id, "created")
 		task.save()
 		return redirect("/tasks/")
 	tasks = Task.objects.all()

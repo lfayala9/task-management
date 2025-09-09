@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from celery.schedules import crontab
 
 load_dotenv(os.path.join(Path(__file__).resolve().parent.parent.parent, ".env"))
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -44,7 +45,6 @@ TEMPLATES = [
         },
     },
 ]
-
 WSGI_APPLICATION = "config.wsgi.application"
 LOGGING = {
     'version': 1,
@@ -77,7 +77,7 @@ DATABASES = {
     }
 }
 AUTH_PASSWORD_VALIDATORS = []
-#estandares internacionales y eso
+#Int standars
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
@@ -85,3 +85,34 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Celery config
+REDIS_HOST = os.environ.get("REDIS_HOST", "cache")
+REDIS_PORT = os.environ.get("REDIS_PORT", "6379")
+REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD", "")
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+
+if REDIS_PASSWORD:
+    CELERY_BROKER_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/0"
+    CELERY_RESULT_BACKEND = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/0"
+else:
+    CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/0"
+    CELERY_RESULT_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/0"
+
+CELERY_BEAT_SCHEDULE = {
+    'daily-summary': {
+        'task': 'apps.tasks.celery_tasks.generate_daily_summary',
+        'schedule': crontab(hour=8, minute=0),
+    },
+    'cleanup-archived-tasks': {
+        'task': 'apps.tasks.celery_tasks.cleanup_archived_tasks',
+        'schedule': crontab(hour=3, minute=0),
+    },
+    'check-overdue-tasks': {
+        'task': 'apps.tasks.celery_tasks.check_overdue_tasks',
+        'schedule': crontab(minute=0),
+    },
+}
