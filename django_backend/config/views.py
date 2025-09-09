@@ -15,29 +15,12 @@ logger = logging.getLogger(__name__)
 
 def test_notification(request):
     try:
-        # Verificar conexión a Redis primero
-        from django.conf import settings
-        import redis
-        
-        print(f"DEBUG: Attempting to connect to Redis...")
-        r = redis.Redis.from_url(settings.CELERY_BROKER_URL)
-        ping_result = r.ping()
-        print(f"DEBUG: Redis ping successful: {ping_result}")
-        
-        # Intentar enviar la tarea
-        print(f"DEBUG: Attempting to send task...")
         result = send_task_notification.delay(1, "task_created")
-        print(f"DEBUG: Task sent successfully with ID: {result.id}")
-        
         return JsonResponse({
             "status": "Task enqueued", 
             "task_id": result.id
         })
     except Exception as e:
-        print(f"DEBUG: Error occurred: {str(e)}")
-        print(f"DEBUG: Error type: {type(e)}")
-        import traceback
-        print(f"DEBUG: Full traceback: {traceback.format_exc()}")
         return JsonResponse({
             "status": "Error", 
             "error": str(e)
