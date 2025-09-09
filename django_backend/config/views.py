@@ -56,6 +56,11 @@ def login_user(request):
 			return render(request, "login.html", {"error": "Invalid username or password."})
 	return render(request, "index.html")
 
+def logout_user(request):
+	from django.contrib.auth import logout
+	logout(request)
+	return redirect("/")
+
 def get_task(id, ret_val):
 	try:
 		task = Task.objects.get(id=id)
