@@ -229,6 +229,7 @@ def auth_api(request, action):
 		return JsonResponse({"status": "token refreshed"})
 	return JsonResponse({"error": "Method not allowed"}, status=405)
 
+@csrf_exempt
 def user_api(request, user_id=None):
 	if request.method == "GET":
 		if user_id == "me":
